@@ -1,26 +1,7 @@
+if SERVER then
+	CreateConVar('bsmod_wontairr_dl2_jumpkillmove_chance', 3, FCVAR_ARCHIVE, '', 0, 4)
+end
 
---This adds to a list of entities that can be killmovable (highlighted blue) when taking damage
---ValveBipeds by default are on this list so use this only for entities with different bone structures such as headcrabs
-
---Make sure the entity you're checking for in the killmove function below is added to this list, you can add as many as you want
-
-timer.Simple(0, function()
-	if killMovableEnts then
-		
-		--These are commented out because we won't be using them in this example, feel free to uncomment them if you want to add more non ValveBiped npcs to be killmovable
-		
-		--[[if !table.HasValue(killMovableEnts, "npc_strider") then
-			table.insert( killMovableEnts, "npc_strider" )
-		end
-		if !table.HasValue(killMovableEnts, "npc_headcrab") then
-			table.insert( killMovableEnts, "npc_headcrab" )
-		end]]
-	end
-end)
-
---This is the hook for custom killmoves
-
---IMPORTANT: Make sure to change the UniqueName to something else to avoid conflicts with other custom killmove addons
 hook.Add("CustomKillMoves", "dyinglight2jumpwontairr", function(ply, target, angleAround)
 	
 	--Setup some values for custom killmove data
@@ -31,53 +12,36 @@ hook.Add("CustomKillMoves", "dyinglight2jumpwontairr", function(ply, target, ang
 	local plyKMPosition = nil
 	local plyKMAngle = nil
 	
-	local kmData = {1, 2, 3, 4, 5} --We'll use this at the end of the hook
+	local kmData = {1, 2, 3, 4, 5}
 	
-	plyKMModel = "models/weapons/c_limbs_dyingwontairr.mdl" --We set the Players killmove model to the custom one that has the animations
+	plyKMModel = "models/weapons/c_limbs_dyingwontairr.mdl"
 	
-	--Use these checks for angle specific killmoves, make sure to keep the brackets when using them
-	if (angleAround <= 45 or angleAround > 315) then
-		--print("in front of target")
-	elseif (angleAround > 45 and angleAround <= 135) then
-		--print("left of target")
-	elseif (angleAround > 135 and angleAround <= 225) then
-		--print("behind target")
-	elseif (angleAround > 225 and angleAround <= 315) then
-		--print("right of target")
-	end
-	
-	--For this example we'll add some custom Zombie killmoves
-	
-	if target:LookupBone("ValveBiped.Bip01_Spine") and !ply:OnGround() and (angleAround > 135 and angleAround <= 225) then --Check if the Target is a Zombie and that the Player is on the ground
+	if target:LookupBone("ValveBiped.Bip01_Spine") and !ply:OnGround() and (angleAround > 135 and angleAround <= 225) and math.random(1,4) <= GetConVar('bsmod_wontairr_dl2_jumpkillmove_chance'):GetFloat() then --Check if the Target is a Zombie and that the Player is on the ground
 		
 		targetKMModel = "models/bsmodimations_dyinglight.mdl" --Set the Targets killmove model 
 		
 		if target:GetClass() == "npc_combine_s" then
-			animName = "dyinglight2jumpbighead" --Set the name of the animation that will play for both the Player and Target model
+			animName = "dyinglight2jumpbighead"
 		else
-			animName = "dyinglight2jump" --Set the name of the animation that will play for both the Player and Target model
+			animName = "dyinglight2jump" 
 		end
 	end
-	
-	--Positioning the player for different killmove animations
 		
 	if animName == "dyinglight2jump" then
-		plyKMPosition = target:GetPos() + (-target:GetForward() * 20 )  --Position the player in front of the Target and x distance away
+		plyKMPosition = target:GetPos() + (-target:GetForward() * 20 )  
 	elseif animName == "dyinglight2jumpbighead" then
-		plyKMPosition = target:GetPos() + (-target:GetForward() * 20 )  --Position the player in front of the Target and x distance away
+		plyKMPosition = target:GetPos() + (-target:GetForward() * 20 ) 
 	end
 	
-	--IMPORTANT: Make sure not to duplicate the rest of the code below, it isn't nessecary and can cause issues, just keep them at the bottom of this function
 	kmData[1] = plyKMModel
 	kmData[2] = targetKMModel
 	kmData[3] = animName
 	kmData[4] = plyKMPosition
 	kmData[5] = plyKMAngle
 	
-	if animName != nil then return kmData end --Send the killmove data to the main addons killmove check function
+	if animName != nil then return kmData end 
 
 end)
---This is the hook for custom killmove effects and sounds (Other particles include: blood_advisor_puncture_withdraw, blood_advisor_pierce_spray_c, and blood_advisor_pierce_spray_b) 	{ event AE_CL_CREATE_PARTICLE_EFFECT 23 "blood_advisor_puncture follow_attachment anim_attachment_head" }	{ event AE_CL_STOP_PARTICLE_EFFECT 30 "blood_advisor_puncture 1" }	
 
 hook.Add("CustomKMEffects", "dyinglight2jumpwontairr", function(ply, animName, targetModel) 
 	local targetHeadBone = nil
